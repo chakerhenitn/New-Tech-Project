@@ -9,7 +9,7 @@ export default function CategoriesList() {
           <Link
             key={category.name}
             className="px-4 py-1 rounded-md bg-slate-800 text-white 
-          cursor-pointer"
+          cursor-pointer hover:bg-slate-900/100 transition"
             href={`/categories/${category.name}`}
           >
             {category.name}
