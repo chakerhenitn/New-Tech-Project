@@ -1,5 +1,10 @@
-import Image from "next/image";
+import CategoriesList from "@/components/CategoriesList";
 
 export default function Home() {
-  return <h1>HELLO IN MY PROJECT</h1>;
+  return (
+    <>
+      <CategoriesList />
+      <div>Post</div>
+    </>
+  );
 }
