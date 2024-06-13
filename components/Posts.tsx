@@ -60,11 +60,11 @@ export default function Post({
         </Link>
       )}
       <h2>{title}</h2>
-      <p>{content}</p>
+      <p className="content">{content}</p>
       {links && (
-        <div>
+        <div className=" my-4 flex flex-col gap-3">
           {links.map((link, i) => (
-            <div>
+            <div key={i} className="flex gap-2 items-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -80,7 +80,9 @@ export default function Post({
                 />
               </svg>
 
-              <Link href={link}>{link}</Link>
+              <Link className="link" href={link}>
+                {link}
+              </Link>
             </div>
           ))}
         </div>
