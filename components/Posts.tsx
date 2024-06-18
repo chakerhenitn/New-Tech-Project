@@ -2,36 +2,58 @@ import Image from "next/image";
 import Link from "next/link";
 import DeleteButton from "./DeleteButton";
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
 interface PostProps {
   id: string;
   author: string;
-  authorEmail?: string;
   date: string;
   thumbnail?: string;
-  category?: string;
+  authorEmail?: string;
   title: string;
   content: string;
   links?: string[];
+  category?: string;
 }
 
-export default function Post({
+export default async function Post({
   id,
   author,
-  authorEmail,
   date,
   thumbnail,
-  category,
+  authorEmail,
   title,
   content,
   links,
+  category,
 }: PostProps) {
-  const isEditable = true;
+  const session = await getServerSession(authOptions);
+
+  const isEditable = session && session?.user?.email === authorEmail;
+
+  const dateObject = new Date(date);
+  const options: Intl.DateTimeFormatOptions = {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  };
+  const formattedDate = dateObject.toLocaleDateString("en-uS", options);
+
+  //const isEditable = true;
+
   return (
     <div className="my-4 border-b border-b-300 py-8">
       <div className="mb-4">
-        Posted by : <span className="font-bold">{author}</span> on : {date}
+        {author ? (
+          <>
+            Posted by : <span className="font-bold">{author}</span> on :
+            {formattedDate}
+          </>
+        ) : (
+          <>Posted on :{formattedDate}</>
+        )}
       </div>
-
       <div className="w-full h-72 relative">
         {thumbnail ? (
           <Image
@@ -95,7 +117,7 @@ export default function Post({
          rounded-md bg-slate-200 w-fit"
         >
           <Link href={`/edit-post/${id}`}>Edit</Link>
-          <DeleteButton />
+          <DeleteButton id={id} />
         </div>
       )}
     </div>

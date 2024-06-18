@@ -1,11 +1,35 @@
 "use client";
 
-import { categoriesData } from "@/data";
+import { TCategory } from "@/app/types";
+//import { categoriesData } from "@/data";
 import Link from "next/link";
-import { useState } from "react";
+//import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
 export default function CreatePostForm() {
   const [links, setLinks] = useState<string[]>([]);
   const [linkInput, setLinkInput] = useState("");
+
+  //create states for fields
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [categories, setCategories] = useState<TCategory[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [publicId, setPublicId] = useState("");
+  const [error, setError] = useState("");
+
+  //const router = useRouter();
+
+  useEffect(() => {
+    const fetchAllCategories = async () => {
+      const res = await fetch("api/categories");
+      const catNames = await res.json();
+      setCategories(catNames);
+    };
+    fetchAllCategories();
+  }, []);
+
   // a function to add the link input to links state
   const addLink = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
@@ -19,12 +43,50 @@ export default function CreatePostForm() {
     setLinks((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!title || !content) {
+      setError("Title and conent are required");
+      return;
+    }
+    try {
+      const res = await fetch("api/posts", {
+        method: "POST",
+        headers: {
+          "Content-type": "applicaton/json",
+        },
+        body: JSON.stringify({
+          title,
+          content,
+          links,
+          selectedCategory,
+          imageUrl,
+          publicId,
+        }),
+      });
+
+      if (res.ok) {
+        // router.push("/dashboard");
+        window.location.href = "/dashboard";
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <div>
       <h2>Create Post</h2>
-      <form className="flex flex-col gap-2">
-        <input type="text" placeholder="title" />
-        <textarea placeholder="Content"></textarea>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+        <input
+          onChange={(e) => setTitle(e.target.value)}
+          type="text"
+          placeholder="title"
+        />
+        <textarea
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Content"
+        ></textarea>
         {links &&
           links.map((link, i) => (
             <div key={i} className="flex items-center gap-4">
@@ -94,18 +156,22 @@ export default function CreatePostForm() {
             add
           </button>
         </div>
-        <select className="p-3 rounded-md border appearance-none">
-          <option value=""> Select a category</option>
-          {categoriesData.map((category) => (
-            <option key={category.id} value={category.name}>
-              {category.name}
-            </option>
-          ))}
+        <select
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="p-3 rounded-md border appearance-none"
+        >
+          <option> Select a category</option>
+          {categories &&
+            categories.map((category) => (
+              <option key={category.id} value={category.catName}>
+                {category.catName}
+              </option>
+            ))}
         </select>
         <button className="primary-btn" type="submit">
           Create a post
         </button>
-        <div className="p-2 text-red-500 font-bold">Error message</div>
+        {error && <div className="p-2 text-red-500 font-bold">{error}</div>}
       </form>
     </div>
   );
