@@ -19,7 +19,7 @@ const getPosts = async (email: string) => {
 export default async function Dashboard() {
   const session = await getServerSession(authOptions);
   const email = session?.user?.email;
-  const name = session?.user?.name;
+
   let posts = [];
 
   if (!session) {

@@ -1,22 +1,21 @@
 "use client";
 
-import { TCategory } from "@/app/types";
-//import { categoriesData } from "@/data";
-import Link from "next/link";
-//import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { TCategory, TPost } from "@/app/types";
 import {
   CldUploadButton,
   CloudinaryUploadWidgetResults,
-  CloudinaryUploadWidgetSources,
 } from "next-cloudinary";
 import Image from "next/image";
+//import { categoriesData } from "@/data";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+//import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export default function CreatePostForm() {
+export default function EditPostForm({ post }: { post: TPost }) {
+  //create states for fields
   const [links, setLinks] = useState<string[]>([]);
   const [linkInput, setLinkInput] = useState("");
-
-  //create states for fields
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [categories, setCategories] = useState<TCategory[]>([]);
@@ -25,30 +24,35 @@ export default function CreatePostForm() {
   const [publicId, setPublicId] = useState("");
   const [error, setError] = useState("");
 
-  //const router = useRouter();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchAllCategories = async () => {
-      const res = await fetch("api/categories");
+      const res = await fetch("/api/categories");
       const catNames = await res.json();
       setCategories(catNames);
     };
+
     fetchAllCategories();
-  }, []);
 
-  const handleImageUpload = async (result: CloudinaryUploadWidgetResults) => {
-    console.log("Result", result);
-    const info = result.info as object;
+    const initValues = () => {
+      setTitle(post.title);
+      setContent(post.content);
+      setImageUrl(post.imageUrl || "");
+      setPublicId(post.publicId || "");
+      setSelectedCategory(post.catName || "");
+      setLinks(post.links || []);
+    };
 
-    if ("secure_url" in info && "public_id" in info) {
-      const url = info.secure_url as string;
-      const public_id = info.public_id as string;
-      setImageUrl(url);
-      setPublicId(public_id);
-      console.log("URL :", url);
-      console.log("public_id :", public_id);
-    }
-  };
+    initValues();
+  }, [
+    post.title,
+    post.content,
+    post.imageUrl,
+    post.publicId,
+    post.catName,
+    post.links,
+  ]);
 
   // a function to add the link input to links state
   const addLink = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -63,25 +67,6 @@ export default function CreatePostForm() {
     setLinks((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Remove of image function
-  const removeImage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch("api/removeImage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicId }),
-      });
-      if (res.ok) {
-        setImageUrl("");
-        setPublicId("");
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  //HandleSubmit function
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -90,8 +75,8 @@ export default function CreatePostForm() {
       return;
     }
     try {
-      const res = await fetch("api/posts", {
-        method: "POST",
+      const res = await fetch(`/api/posts/${post.id}`, {
+        method: "PUT",
         headers: {
           "Content-type": "applicaton/json",
         },
@@ -113,6 +98,39 @@ export default function CreatePostForm() {
       console.log(error);
     }
   };
+  //Handle imageupload function
+  const handleImageUpload = async (result: CloudinaryUploadWidgetResults) => {
+    //console.log("Result", result);
+    const info = result.info as object;
+
+    if ("secure_url" in info && "public_id" in info) {
+      const url = info.secure_url as string;
+      const public_id = info.public_id as string;
+      setImageUrl(url);
+      setPublicId(public_id);
+      console.log("URL :", url);
+      console.log("public_id :", public_id);
+    }
+  };
+
+  // Remove of image function
+  const removeImage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/removeImage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publicId }),
+      });
+      if (res.ok) {
+        setImageUrl("");
+        setPublicId("");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div>
       <h2>Create Post</h2>
@@ -121,10 +139,12 @@ export default function CreatePostForm() {
           onChange={(e) => setTitle(e.target.value)}
           type="text"
           placeholder="title"
+          value={title}
         />
         <textarea
           onChange={(e) => setContent(e.target.value)}
           placeholder="Content"
+          value={content}
         ></textarea>
         {links &&
           links.map((link, i) => (
@@ -195,7 +215,6 @@ export default function CreatePostForm() {
             add
           </button>
         </div>
-
         <CldUploadButton
           uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
           className={`h-48 border-2 mt-4 
@@ -238,9 +257,11 @@ export default function CreatePostForm() {
             Remove Image
           </button>
         )}
+
         <select
           onChange={(e) => setSelectedCategory(e.target.value)}
           className="p-3 rounded-md border appearance-none"
+          value={selectedCategory}
         >
           <option> Select a category</option>
           {categories &&
@@ -251,7 +272,7 @@ export default function CreatePostForm() {
             ))}
         </select>
         <button className="primary-btn" type="submit">
-          Create a post
+          Update a post
         </button>
         {error && <div className="p-2 text-red-500 font-bold">{error}</div>}
       </form>
